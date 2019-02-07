@@ -133,15 +133,51 @@ class KnowledgeBase(object):
     def kb_explain(self, fact_or_rule):
         """
         Explain where the fact or rule comes from
-
         Args:
             fact_or_rule (Fact or Rule) - Fact or rule to be explained
-
         Returns:
             string explaining hierarchical support from other Facts and rules
         """
         ####################################################
         # Student code goes here
+        if not isinstance(fact_or_rule, Fact) and not isinstance(fact_or_rule, Rule):
+            return False
+
+        if isinstance(fact_or_rule, Fact):
+            fact_or_rule = self._get_fact(fact_or_rule)
+            if not fact_or_rule:
+            	return "Fact is not in the KB"
+        if isinstance(fact_or_rule, Rule):
+        	fact_or_rule = self._get_rule(fact_or_rule)
+        	if not fact_or_rule:
+        		return "Rule is not in the KB"
+          
+        return self.explain_helper(fact_or_rule, 0)
+
+    def explain_helper(self, fact_or_rule, recursive_depth):
+        ret = ""
+        if isinstance(fact_or_rule, Fact):
+            ret += "fact: " + str(fact_or_rule.statement)
+        elif isinstance(fact_or_rule, Rule):
+            ret += "rule: ("
+            left = fact_or_rule.lhs
+            right = fact_or_rule.rhs
+            for conditions in left:
+                ret += str(conditions) + ", "
+            ret = ret[:-2] + ") -> " + str(right)
+        if fact_or_rule.asserted:
+            ret += " ASSERTED"
+        if fact_or_rule.supported_by:
+            whitespace = "  "
+            const2space = whitespace
+            for x in range(recursive_depth):
+                whitespace += const2space + const2space
+            for pair in fact_or_rule.supported_by:
+                ret += "\n" + whitespace + "SUPPORTED BY\n"
+                ret += whitespace + const2space + self.explain_helper(pair[0], recursive_depth + 1) + "\n" + whitespace + const2space + self.explain_helper(pair[1], recursive_depth + 1)
+        #print(ret)
+        return ret
+
 
 
 class InferenceEngine(object):
